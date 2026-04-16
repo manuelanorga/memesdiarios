@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>memesdiarios.com</title>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/video.js/7.21.5/video-js.min.css" rel="stylesheet">
+<style>
+:root {
+  --yellow: #F9C900;
+  --yellow-dark: #e0b400;
+  --red: #E8284D;
+  --green: #3DD68C;
+  --dark: #111;
+  --card-bg: #fff;
+  --bg: #f2f2f2;
+  --border: #e8e8e8;
+  --text: #1a1a1a;
+  --muted: #888;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); display: flex; flex-direction: column; min-height: 100vh; }
+.main-content { flex: 1; }
+
+/* HEADER */
+.header { background: var(--yellow); padding: 0 16px; height: 54px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
+.hamburger { background: none; border: none; cursor: pointer; padding: 6px; display: flex; flex-direction: column; gap: 5px; }
+.hamburger span { display: block; width: 22px; height: 2.5px; background: var(--dark); border-radius: 2px; }
+.logo-img { height: 38px; width: auto; display: block; }
+.header-spacer { width: 34px; }
+
+/* DRAWER OVERLAY */
+.overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 200; opacity: 0; pointer-events: none; transition: opacity 0.25s; }
+.overlay.open { opacity: 1; pointer-events: all; }
+
+/* DRAWER */
+.drawer { position: fixed; top: 0; left: -290px; width: 290px; height: 100vh; background: var(--dark); z-index: 300; transition: left 0.25s ease; overflow-y: auto; }
+.drawer.open { left: 0; }
+.drawer-head { background: var(--yellow); padding: 14px 16px; display: flex; align-items: center; gap: 10px; }
+.drawer-head img { height: 34px; }
+.drawer-close { margin-left: auto; background: none; border: none; font-size: 22px; cursor: pointer; color: var(--dark); line-height: 1; }
+.drawer-section { padding: 10px 0; border-bottom: 1px solid #1e1e1e; }
+.drawer-label { font-size: 10px; font-weight: 700; color: #444; letter-spacing: 1.2px; text-transform: uppercase; padding: 0 16px 8px; }
+.drawer-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; cursor: pointer; color: #bbb; font-size: 14px; font-weight: 500; transition: background 0.12s; border-left: 3px solid transparent; }
+.drawer-item:hover { background: #1e1e1e; color: #fff; }
+.drawer-item.active { background: #1a1a1a; color: #fff; border-left-color: var(--red); }
+.drawer-item .ic { width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.drawer-item .ic svg { width: 18px; height: 18px; stroke: #666; stroke-width: 1.8; fill: none; stroke-linecap: round; stroke-linejoin: round; transition: stroke 0.12s; }
+.drawer-item:hover .ic svg { stroke: #ccc; }
+.drawer-item.active .ic svg { stroke: var(--yellow); }
+
+/* CATS BAR */
+.cats-bar-wrap { background: var(--card-bg); border-bottom: 1px solid var(--border); position: sticky; top: 54px; z-index: 90; }
+.cats-bar { display: flex; overflow-x: auto; padding: 10px 12px; gap: 8px; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; }
+.cats-bar::-webkit-scrollbar { height: 0px; }
+.cat-tab { padding: 7px 16px; border-radius: 20px; font-size: 13px; font-weight: 600; color: var(--muted); white-space: nowrap; cursor: pointer; border: 1.5px solid var(--border); background: var(--card-bg); transition: all 0.18s ease; flex-shrink: 0; }
+.cat-tab:hover:not(.active) { border-color: #aaa; color: var(--text); }
+.cat-tab.active { background: var(--dark); color: #fff; border-color: var(--dark); }
+html.dark .cat-tab { border-color: #333; color: #666; background: #1a1a1a; }
+html.dark .cat-tab:hover:not(.active) { border-color: #555; color: #aaa; }
+html.dark .cat-tab.active { background: var(--yellow); color: #111; border-color: var(--yellow); }
+
+/* TOOLBAR */
+.toolbar { background: var(--card-bg); padding: 8px 14px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+.refresh-btn { padding: 6px 12px; border-radius: 8px; border: 1.5px solid var(--yellow); background: #fff; cursor: pointer; font-size: 13px; color: var(--dark); font-weight: 600; display: flex; align-items: center; gap: 5px; transition: all 0.15s; }
+.refresh-btn:hover { background: var(--yellow); }
+.count-label { font-size: 12px; color: #bbb; margin-left: auto; }
+
+/* FEED */
+.feed { max-width: 680px; margin: 0 auto; }
+.meme-card { background: var(--card-bg); margin: 10px 12px; border-radius: 14px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.08); border: 1px solid var(--border); }
+.meme-body { padding: 12px 14px 8px; }
+.meme-title { font-size: 15px; font-weight: 600; color: var(--text); line-height: 1.4; margin-bottom: 10px; }
+.meme-img-wrap { background: #f0f0f0; display: flex; align-items: center; justify-content: center; }
+.meme-img { width: 100%; max-height: 520px; object-fit: contain; display: block; }
+.meme-footer { padding: 10px 14px; border-top: 1px solid #f5f5f5; display: flex; align-items: center; gap: 8px; }
+.vote-wrap { display: flex; align-items: center; gap: 4px; }
+.vote-btn { width: 34px; height: 34px; border-radius: 50%; border: 1.5px solid #eee; background: #fafafa; cursor: pointer; font-size: 14px; transition: all 0.15s; display: flex; align-items: center; justify-content: center; color: #888; }
+.vote-btn:hover { background: #f0f0f0; }
+.vote-btn.up.active { background: var(--red); border-color: var(--red); color: #fff; }
+.vote-btn.down.active { background: var(--green); border-color: var(--green); color: #fff; }
+.vote-score { font-size: 13px; font-weight: 700; color: #555; min-width: 40px; text-align: center; }
+
+/* MEMESTV */
+.tv-section { display: none; max-width: 680px; margin: 0 auto; padding: 14px; }
+.tv-section.active { display: block; }
+.tv-head { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+.tv-title { font-size: 18px; font-weight: 800; }
+.live-badge { background: var(--red); color: #fff; font-size: 10px; font-weight: 800; padding: 3px 8px; border-radius: 4px; letter-spacing: 0.8px; }
+.tv-desc { font-size: 13px; color: var(--muted); margin-bottom: 14px; }
+.tv-wrap { border-radius: 14px; overflow: hidden; background: #000; aspect-ratio: 16/9; }
+
+/* STATES */
+.loading { text-align: center; padding: 3rem; color: #aaa; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.spinner { width: 28px; height: 28px; border: 3px solid #eee; border-top-color: var(--red); border-radius: 50%; animation: spin 0.7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.error { text-align: center; padding: 3rem 1rem; color: #aaa; font-size: 14px; line-height: 1.9; }
+.error button { margin-top: 12px; padding: 8px 20px; border-radius: 8px; border: 1px solid #ddd; background: #fff; cursor: pointer; }
+
+/* DARK MODE - clase manual */
+html.dark { --bg: #0a0a0a; --card-bg: #1a1a1a; --border: #2a2a2a; --text: #eee; --muted: #666; }
+html.dark .meme-img-wrap { background: #222; }
+html.dark .meme-footer { border-color: #2a2a2a; }
+html.dark .vote-btn { background: #222; border-color: #333; }
+html.dark .vote-btn:hover { background: #2a2a2a; }
+html.dark .toolbar { border-color: #2a2a2a; }
+html.dark .refresh-btn { background: #1a1a1a; color: var(--yellow); }
+html.dark .refresh-btn:hover { background: var(--yellow); color: #111; }
+html.dark .meme-del-dia { background: #1a1500; border-color: #3a3000; }
+html.dark .mdd-label { color: #b8900a; }
+html.dark .load-more-btn { background: #1a1a1a; color: #eee; }
+html.dark .error button { background: #1a1a1a; color: #eee; border-color: #333; }
+html.dark .ranking-section { background: var(--bg); }
+html.dark .rank-card { background: var(--card-bg); border-color: var(--border); }
+html.dark .rank-title { color: var(--text); }
+
+/* DARK MODE TOGGLE */
+.dark-toggle { background: #ccc; border: none; cursor: pointer; border-radius: 20px; width: 52px; height: 30px; position: relative; flex-shrink: 0; transition: background 0.25s ease; padding: 0; }
+.dark-toggle.on { background: #3DD68C; }
+.dark-toggle .toggle-thumb { position: absolute; width: 24px; height: 24px; border-radius: 50%; background: #fff; top: 3px; left: 3px; transition: left 0.25s ease; box-shadow: 0 2px 4px rgba(0,0,0,0.25); }
+.dark-toggle.on .toggle-thumb { left: 25px; }
+
+/* RANKING */
+.ranking-section { display: none; max-width: 680px; margin: 0 auto; padding: 12px; }
+.ranking-section.active { display: block; }
+.ranking-header { font-size: 18px; font-weight: 800; color: var(--text); padding: 4px 0 14px; display: flex; align-items: center; gap: 8px; }
+.rank-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 14px; margin-bottom: 10px; overflow: hidden; display: flex; gap: 0; }
+.rank-pos { width: 52px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 20px; font-weight: 900; padding: 12px 0; background: var(--bg); }
+.rank-pos.gold { background: #fff8e1; color: #c9960a; }
+.rank-pos.silver { background: #f5f5f5; color: #888; }
+.rank-pos.bronze { background: #fff3e0; color: #b87333; }
+html.dark .rank-pos.gold { background: #2a2000; }
+html.dark .rank-pos.silver { background: #1e1e1e; }
+html.dark .rank-pos.bronze { background: #1e1500; }
+.rank-img { width: 90px; flex-shrink: 0; object-fit: cover; display: block; }
+.rank-info { flex: 1; padding: 10px 12px; display: flex; flex-direction: column; justify-content: center; gap: 6px; min-width: 0; }
+.rank-title { font-size: 13px; font-weight: 600; color: var(--text); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.rank-score { font-size: 12px; color: var(--red); font-weight: 700; }
+
+/* PULL TO REFRESH */
+.ptr-indicator { display: flex; align-items: center; justify-content: center; gap: 8px; height: 0; overflow: hidden; background: var(--yellow); transition: height 0.2s; font-size: 13px; font-weight: 600; color: var(--dark); }
+.ptr-indicator.visible { height: 48px; }
+.ptr-spinner { width: 18px; height: 18px; border: 2px solid rgba(0,0,0,0.2); border-top-color: var(--dark); border-radius: 50%; animation: spin 0.7s linear infinite; }
+
+/* MEME DEL DÍA */
+.meme-del-dia { background: #fffbea; border: 2px solid var(--yellow); margin: 10px 12px; border-radius: 14px; overflow: hidden; box-shadow: 0 2px 8px rgba(249,201,0,0.2); }
+.mdd-header { background: var(--yellow); padding: 8px 14px; display: flex; align-items: center; gap: 6px; }
+.mdd-label { font-size: 11px; font-weight: 800; color: #7a5f00; letter-spacing: 0.5px; text-transform: uppercase; }
+.mdd-crown { font-size: 14px; }
+
+/* CARGAR MÁS */
+.load-more-wrap { text-align: center; padding: 16px; }
+.load-more-btn { padding: 10px 28px; border-radius: 20px; border: 2px solid var(--yellow); background: #fff; color: var(--dark); font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.15s; }
+.load-more-btn:hover { background: var(--yellow); }
+.load-more-btn:disabled { opacity: 0.5; cursor: default; }
+.sentinel { height: 1px; }
+
+/* FOOTER */
+.footer { background: var(--dark); color: #666; text-align: center; padding: 20px 16px; font-size: 12px; }
+.footer a { color: var(--yellow); text-decoration: none; font-weight: 600; }
+.footer a:hover { text-decoration: underline; }
+.footer-copy { margin-top: 6px; font-size: 11px; color: #444; }
+
+/* MODAL T&C */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 500; display: none; align-items: flex-end; justify-content: center; }
+.modal-overlay.open { display: flex; }
+.modal-box { background: var(--card-bg); width: 100%; max-width: 680px; max-height: 85vh; border-radius: 20px 20px 0 0; overflow: hidden; display: flex; flex-direction: column; }
+.modal-head { background: var(--yellow); padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+.modal-head-title { font-size: 15px; font-weight: 800; color: #111; }
+.modal-close { background: none; border: none; font-size: 22px; cursor: pointer; color: #111; line-height: 1; }
+.modal-body { overflow-y: auto; padding: 16px; font-size: 13px; line-height: 1.7; color: var(--text); }
+.modal-body h3 { font-size: 13px; font-weight: 700; margin: 16px 0 6px; color: var(--text); }
+.modal-body p { margin-bottom: 10px; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<div class="overlay" id="overlay" onclick="closeDrawer()"></div>
+
+<div class="drawer" id="drawer">
+  <div class="drawer-head">
+    <div style="font-size:17px;font-weight:800;color:#fff;">memes<span style="color:var(--yellow);">diarios</span></div>
+    <button class="drawer-close" onclick="closeDrawer()">✕</button>
+  </div>
+  <div class="drawer-section">
+    <div class="drawer-label">Principal</div>
+    <div class="drawer-item active" id="di-tendencias" onclick="selectCat('tendencias','memesespanol+PERU+MemesEnEspanol+BuenosMemesEsp')">
+      <span class="ic"><svg viewBox="0 0 24 24"><polygon points="13,2 4.5,13.5 11,13.5 10,22 19.5,10.5 13,10.5"/></svg></span>Tendencias
+    </div>
+    <div class="drawer-item" id="di-picante" onclick="selectCat('picante','memesespanol+PERU+MemesEnEspanol+BuenosMemesEsp')">
+      <span class="ic"><svg viewBox="0 0 24 24"><path d="M12 2c0 4-4 6-4 10a4 4 0 008 0c0-4-4-6-4-10z"/><path d="M9 17c0 1.66 1.34 3 3 3s3-1.34 3-3"/></svg></span>Picante
+    </div>
+    <div class="drawer-item" id="di-popular" onclick="selectCat('popular','memesespanol+MemesEnEspanol+spain')">
+      <span class="ic"><svg viewBox="0 0 24 24"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg></span>Popular
+    </div>
+    <div class="drawer-item" id="di-tv" onclick="selectCat('tv','')">
+      <span class="ic"><svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="13" rx="2"/><polyline points="16,3 12,7 8,3"/></svg></span>MemesTV
+    </div>
+  </div>
+  <div class="drawer-section">
+    <div class="drawer-label">Categorías</div>
+    <div class="drawer-item" id="di-gracioso" onclick="selectCat('gracioso','memesespanol')">
+      <span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg></span>Gracioso
+    </div>
+    <div class="drawer-item" id="di-peru" onclick="selectCat('peru','PERU+Lima_Peru')">
+      <span class="ic"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg></span>Perú
+    </div>
+    <div class="drawer-item" id="di-deportes" onclick="selectCat('deportes','futbol+deportes')">
+      <span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/><path d="M2 12h20"/></svg></span>Deportes
+    </div>
+    <div class="drawer-item" id="di-latinos" onclick="selectCat('latinos','dankgentina+MexicanMemes')">
+      <span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 010 20"/><path d="M12 2a15.3 15.3 0 000 20"/></svg></span>Memes latinos
+    </div>
+    <div class="drawer-item" id="di-ranking" onclick="selectCat('ranking','')">
+      <span class="ic"><svg viewBox="0 0 24 24"><polyline points="18,20 18,10"/><polyline points="12,20 12,4"/><polyline points="6,20 6,14"/></svg></span>Ranking
+    </div>
+    <div class="drawer-item" id="di-politica" onclick="selectCat('politica','es+PERU')">
+      <span class="ic"><svg viewBox="0 0 24 24"><path d="M3 22V8l9-6 9 6v14"/><path d="M9 22V12h6v10"/><rect x="9" y="12" width="6" height="10"/></svg></span>Política
+    </div>
+  </div>
+  <div class="drawer-section">
+    <div class="drawer-label">En vivo</div>
+    <div class="drawer-item" id="di-tv2" onclick="selectCat('tv','')">
+      <span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polygon points="10,8 16,12 10,16"/></svg></span>MemesTV en vivo
+    </div>
+  </div>
+</div>
+
+<div class="header">
+  <button class="hamburger" onclick="openDrawer()" aria-label="Menú">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2" stroke-linecap="round">
+      <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+    </svg>
+  </button>
+  <img class="logo-img" src="data:image/png;base64,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" alt="memesdiarios.com">
+  <button class="dark-toggle" id="dark-toggle" onclick="toggleDark()" title="Modo oscuro/claro">
+    <div class="toggle-thumb"></div>
+  </button>
+</div>
+
+<div class="cats-bar-wrap">
+<div class="cats-bar">
+  <div class="cat-tab active" id="ct-tendencias" onclick="selectCat('tendencias','memesespanol+PERU+MemesEnEspanol+BuenosMemesEsp')">Tendencias</div>
+  <div class="cat-tab" id="ct-picante" onclick="selectCat('picante','memesespanol+PERU+MemesEnEspanol+BuenosMemesEsp')">Picante</div>
+  <div class="cat-tab" id="ct-popular" onclick="selectCat('popular','memesespanol+MemesEnEspanol+spain')">Popular</div>
+  <div class="cat-tab" id="ct-tv" onclick="selectCat('tv','')">MemesTV</div>
+  <div class="cat-tab" id="ct-gracioso" onclick="selectCat('gracioso','memesespanol')">Gracioso</div>
+  <div class="cat-tab" id="ct-peru" onclick="selectCat('peru','PERU+Lima_Peru')">Perú</div>
+  <div class="cat-tab" id="ct-deportes" onclick="selectCat('deportes','futbol+deportes')">Deportes</div>
+  <div class="cat-tab" id="ct-latinos" onclick="selectCat('latinos','dankgentina+MexicanMemes')">Memes latinos</div>
+  <div class="cat-tab" id="ct-ranking" onclick="selectCat('ranking','')">Ranking</div>
+  <div class="cat-tab" id="ct-politica" onclick="selectCat('politica','es+PERU')">Política</div>
+</div>
+</div>
+
+<div class="toolbar" id="toolbar">
+  <button class="refresh-btn" onclick="loadMemes()">↻ Actualizar</button>
+  <span class="count-label" id="count-label"></span>
+</div>
+
+<div class="ptr-indicator" id="ptr"><div class="ptr-spinner"></div> Actualizando...</div>
+<div class="main-content">
+
+<div class="feed" id="feed">
+  <div class="loading"><div class="spinner"></div>Cargando memes...</div>
+</div>
+<div class="load-more-wrap" id="load-more-wrap" style="display:none">
+  <button class="load-more-btn" id="load-more-btn" onclick="loadMore()">Cargar más memes</button>
+</div>
+<div class="sentinel" id="sentinel"></div>
+
+<div class="ranking-section" id="ranking-section">
+  <div class="ranking-header">🏆 Top memes del día</div>
+  <div id="ranking-feed"><div class="loading"><div class="spinner"></div>Cargando ranking...</div></div>
+</div>
+
+<div class="tv-section" id="tv-section">
+  <div class="tv-head"><div class="tv-title">MemesTV</div><span class="live-badge">EN VIVO</span></div>
+  <div class="tv-desc">Canal de memes 24/7 — siempre hay algo gracioso</div>
+  <div class="tv-wrap">
+    <video id="tv-player" class="video-js vjs-default-skin vjs-big-play-centered" controls autoplay muted style="width:100%;height:100%;">
+      <source src="https://bd93cfed.wurl.com/master/f36d25e7e52f1ba8d7e56eb859c636563214f541/UmFrdXRlblRWLWV1X0ZhaWxBcm15X0hMUw/playlist.m3u8" type="application/x-mpegURL">
+    </video>
+  </div>
+</div>
+
+<script>
+let currentSub = 'memesespanol+PERU+MemesEnEspanol+BuenosMemesEsp';
+let votes = {};
+let isLoadingMore = false;
+
+/* ── DARK MODE ── */
+function applyDark(on) {
+  document.documentElement.classList.toggle('dark', on);
+  const btn = document.getElementById('dark-toggle');
+  if (btn) btn.classList.toggle('on', on);
+}
+function toggleDark() {
+  const on = !document.documentElement.classList.contains('dark');
+  localStorage.setItem('darkMode', on ? '1' : '0');
+  applyDark(on);
+}
+(function initDark() {
+  const saved = localStorage.getItem('darkMode');
+  const sysDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  applyDark(saved !== null ? saved === '1' : sysDark);
+})();
+
+function openDrawer() { document.getElementById('drawer').classList.add('open'); document.getElementById('overlay').classList.add('open'); }
+function closeDrawer() { document.getElementById('drawer').classList.remove('open'); document.getElementById('overlay').classList.remove('open'); }
+
+function selectCat(cat, sub) {
+  closeDrawer();
+  document.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.drawer-item').forEach(t => t.classList.remove('active'));
+  const ct = document.getElementById('ct-' + cat);
+  const di = document.getElementById('di-' + cat);
+  if (ct) { ct.classList.add('active'); ct.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' }); }
+  if (di) di.classList.add('active');
+  const feed = document.getElementById('feed');
+  const toolbar = document.getElementById('toolbar');
+  const tv = document.getElementById('tv-section');
+  const lmw = document.getElementById('load-more-wrap');
+  const ranking = document.getElementById('ranking-section');
+  feed.style.display = 'none'; toolbar.style.display = 'none';
+  tv.classList.remove('active'); ranking.classList.remove('active');
+  lmw.style.display = 'none';
+  if (cat === 'tv') {
+    tv.classList.add('active');
+  } else if (cat === 'ranking') {
+    ranking.classList.add('active');
+    loadRanking();
+  } else {
+    feed.style.display = ''; toolbar.style.display = '';
+    currentSub = sub; loadMemes();
+  }
+}
+
+function vote(id, dir, score) {
+  votes[id] = (votes[id] === dir) ? null : dir;
+  document.getElementById('up_' + id).classList.toggle('active', votes[id] === 'up');
+  document.getElementById('down_' + id).classList.toggle('active', votes[id] === 'down');
+  const adj = score + (votes[id] === 'up' ? 1 : votes[id] === 'down' ? -1 : 0);
+  document.getElementById('cnt_' + id).textContent = fmtNum(adj);
+}
+
+function fmtNum(n) { return n >= 1000 ? (n/1000).toFixed(1)+'k' : String(Math.round(n)); }
+function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+const BLOCK = ['sex','sexy','porn','nsfw','nude','naked','desnud','porno','tetas','culo','pene','vagina','erotic','xxx','onlyfans','caliente','cachond','coger','follar','puta','zorra','papi','mami','horny','dick','cock','boob','ass','slutt','fetish'];
+const isClean = m => { if (m.nsfw || m.spoiler) return false; const t = (m.title||'').toLowerCase(); return !BLOCK.some(w => t.includes(w)); };
+
+function buildCard(m, i) {
+  const id = 'meme_' + i + '_' + Date.now();
+  const card = document.createElement('div');
+  card.className = 'meme-card';
+  card.innerHTML = `
+    <div class="meme-body"><div class="meme-title">${escHtml(m.title)}</div></div>
+    <div class="meme-img-wrap"><img class="meme-img" src="${escHtml(m.url)}" loading="lazy" onerror="this.parentElement.style.display='none'"></div>
+    <div class="meme-footer">
+      <div class="vote-wrap">
+        <button class="vote-btn up" id="up_${id}" onclick="vote('${id}','up',${m.ups})">▲</button>
+        <span class="vote-score" id="cnt_${id}">${fmtNum(m.ups)}</span>
+        <button class="vote-btn down" id="down_${id}" onclick="vote('${id}','down',${m.ups})">▼</button>
+      </div>
+    </div>`;
+  return card;
+}
+
+/* ── MEME DEL DÍA ── */
+async function loadMemeDelDia() {
+  const today = new Date().toISOString().slice(0, 10);
+  const cached = localStorage.getItem('mdd_date') === today ? JSON.parse(localStorage.getItem('mdd_data') || 'null') : null;
+  let meme = cached;
+  if (!meme) {
+    try {
+      const res = await fetch('https://meme-api.com/gimme/memesespanol+PERU+MemesEnEspanol/5');
+      if (res.ok) {
+        const data = await res.json();
+        const clean = (data.memes||[]).filter(m => m.url && isClean(m));
+        if (clean.length) {
+          meme = clean[0];
+          localStorage.setItem('mdd_date', today);
+          localStorage.setItem('mdd_data', JSON.stringify(meme));
+        }
+      }
+    } catch(e) {}
+  }
+  if (!meme) return;
+  const feed = document.getElementById('feed');
+  const card = document.createElement('div');
+  card.className = 'meme-del-dia';
+  const id = 'mdd_' + Date.now();
+  card.innerHTML = `
+    <div class="mdd-header">
+      <span class="mdd-crown">👑</span>
+      <span class="mdd-label">Meme del día</span>
+    </div>
+    <div class="meme-body"><div class="meme-title">${escHtml(meme.title)}</div></div>
+    <div class="meme-img-wrap"><img class="meme-img" src="${escHtml(meme.url)}" loading="lazy" onerror="this.parentElement.style.display='none'"></div>
+    <div class="meme-footer">
+      <div class="vote-wrap">
+        <button class="vote-btn up" id="up_${id}" onclick="vote('${id}','up',${meme.ups})">▲</button>
+        <span class="vote-score" id="cnt_${id}">${fmtNum(meme.ups)}</span>
+        <button class="vote-btn down" id="down_${id}" onclick="vote('${id}','down',${meme.ups})">▼</button>
+      </div>
+    </div>`;
+  feed.insertBefore(card, feed.firstChild);
+}
+
+/* ── RANKING ── */
+let rankingLoaded = false;
+async function loadRanking() {
+  if (rankingLoaded) return;
+  const rfeed = document.getElementById('ranking-feed');
+  rfeed.innerHTML = '<div class="loading"><div class="spinner"></div>Calculando ranking...</div>';
+  try {
+    const res = await fetch('https://meme-api.com/gimme/memesespanol+PERU+MemesEnEspanol+mexico+argentina+chile/50');
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    const memes = (data.memes||[]).filter(m => m.url && isClean(m))
+      .sort((a,b) => b.ups - a.ups).slice(0, 10);
+    if (!memes.length) { rfeed.innerHTML = '<div class="error">Sin datos disponibles.</div>'; return; }
+    const medals = ['🥇','🥈','🥉'];
+    const posClass = ['gold','silver','bronze'];
+    rfeed.innerHTML = '';
+    memes.forEach((m, i) => {
+      const id = 'rank_' + i + '_' + Date.now();
+      const card = document.createElement('div');
+      card.className = 'rank-card';
+      const pos = i < 3 ? medals[i] : '#' + (i+1);
+      const cls = i < 3 ? posClass[i] : '';
+      card.innerHTML = `
+        <div class="rank-pos ${cls}">${pos}</div>
+        <img class="rank-img" src="${escHtml(m.url)}" loading="lazy" onerror="this.style.display='none'">
+        <div class="rank-info">
+          <div class="rank-title">${escHtml(m.title)}</div>
+          <div class="rank-score">▲ ${fmtNum(m.ups)} votos</div>
+        </div>`;
+      rfeed.appendChild(card);
+    });
+    rankingLoaded = true;
+  } catch(e) {
+    rfeed.innerHTML = `<div class="error">No se pudo cargar.<br><button onclick="rankingLoaded=false;loadRanking()">↻ Reintentar</button></div>`;
+  }
+}
+
+/* ── CARGAR MEMES ── */
+async function loadMemes() {
+  const feed = document.getElementById('feed'), label = document.getElementById('count-label');
+  const lmw = document.getElementById('load-more-wrap');
+  feed.innerHTML = '<div class="loading"><div class="spinner"></div>Cargando memes...</div>';
+  lmw.style.display = 'none';
+  label.textContent = '';
+  try {
+    const res = await fetch(`https://meme-api.com/gimme/${currentSub}/25`);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    const memes = (data.memes||[]).filter(m => m.url && isClean(m));
+    if (!memes.length) { feed.innerHTML = '<div class="error">Sin memes disponibles.<br><button onclick="loadMemes()">↻ Reintentar</button></div>'; return; }
+    label.textContent = memes.length + ' memes';
+    feed.innerHTML = '';
+    memes.forEach((m, i) => feed.appendChild(buildCard(m, i)));
+    lmw.style.display = 'block';
+    await loadMemeDelDia();
+  } catch(e) {
+    feed.innerHTML = `<div class="error">No se pudo cargar.<br><small>${escHtml(e.message)}</small><br><button onclick="loadMemes()">↻ Reintentar</button></div>`;
+  }
+}
+
+/* ── CARGAR MÁS ── */
+async function loadMore() {
+  if (isLoadingMore) return;
+  const lmw = document.getElementById('load-more-wrap');
+  if (lmw.style.display === 'none') return;
+  isLoadingMore = true;
+  const btn = document.getElementById('load-more-btn');
+  const feed = document.getElementById('feed');
+  btn.disabled = true;
+  btn.textContent = 'Cargando...';
+  try {
+    const res = await fetch(`https://meme-api.com/gimme/${currentSub}/25`);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    const memes = (data.memes||[]).filter(m => m.url && isClean(m));
+    const offset = feed.querySelectorAll('.meme-card').length;
+    memes.forEach((m, i) => feed.appendChild(buildCard(m, offset + i)));
+  } catch(e) {}
+  btn.disabled = false;
+  btn.textContent = 'Cargar más memes';
+  isLoadingMore = false;
+}
+
+/* ── INFINITE SCROLL ── */
+const sentinel = document.getElementById('sentinel');
+const scrollObserver = new IntersectionObserver(entries => {
+  if (entries[0].isIntersecting) loadMore();
+}, { rootMargin: '200px' });
+scrollObserver.observe(sentinel);
+
+/* ── PULL TO REFRESH ── */
+let ptrStartY = 0, ptrActive = false;
+const ptr = document.getElementById('ptr');
+document.addEventListener('touchstart', e => {
+  if (window.scrollY === 0) ptrStartY = e.touches[0].clientY;
+}, { passive: true });
+document.addEventListener('touchmove', e => {
+  if (ptrStartY > 0 && window.scrollY === 0 && e.touches[0].clientY - ptrStartY > 65) {
+    ptrActive = true; ptr.classList.add('visible');
+  }
+}, { passive: true });
+document.addEventListener('touchend', () => {
+  if (ptrActive) { ptr.classList.remove('visible'); loadMemes(); }
+  ptrActive = false; ptrStartY = 0;
+});
+
+loadMemes();
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/video.js/7.21.5/video.min.js"></script>
+<script>window.addEventListener('load',()=>{ if(typeof videojs!=='undefined') videojs('tv-player',{fluid:true,html5:{vhs:{overrideNative:true}}}); });</script>
+
+</div><!-- /main-content -->
+
+<footer class="footer">
+  <div>© 2026 memesdiarios.com — Todos los derechos reservados</div>
+  <div style="margin-top:8px;">
+    <a href="#" onclick="openTyC();return false;">Términos y condiciones</a>
+    &nbsp;·&nbsp;
+    <a href="https://memesdiarios.com/contacto/" target="_blank">Contacto</a>
+  </div>
+</footer>
+
+<div class="modal-overlay" id="tyc-modal" onclick="if(event.target===this)closeTyC()">
+  <div class="modal-box">
+    <div class="modal-head">
+      <span class="modal-head-title">Términos y condiciones</span>
+      <button class="modal-close" onclick="closeTyC()">✕</button>
+    </div>
+    <div class="modal-body">
+      <h3>1. Introducción</h3>
+      <p>El acceso y uso de este sitio web se rige por los Términos y Condiciones descritos a continuación, aplicables a todos los actos y contratos ejecutados entre los usuarios y VIETTEL PERU S.A.C ("Bitel"). Al ingresar y suscribirse al servicio, el cliente acepta estos Términos y Condiciones. Bitel se reserva el derecho de actualizarlos en cualquier momento sin previo aviso.</p>
+      <h3>2. Descripción del servicio</h3>
+      <p>MEMES es una plataforma que proporciona acceso a una amplia variedad de memes divertidos organizados por categorías. Los usuarios pueden ver memes en tendencia, compartirlos y descargarlos. El servicio incluye la sección MEMES TV con transmisión en tiempo real.</p>
+      <h3>3. Suscripción y cobro</h3>
+      <p>El cliente Bitel puede suscribirse enviando un SMS sin costo al 25365 con el comando "MEMES", vía la app "Mi Bitel" o en https://play.bitel.com.pe. Suscripción diaria: S/ 1.50 (Inc. IGV), renovación automática. Para cancelar, envíe "SALIR" al 25365.</p>
+      <h3>4. Acceso al servicio</h3>
+      <p>Una vez suscrito, el cliente recibe un SMS con un enlace dinámico de acceso. No se requiere registro ni inicio de sesión. Compatible con smartphone (Android e iOS), PC, laptop y tablet.</p>
+      <h3>5. Exención de responsabilidad</h3>
+      <p>Los contenidos no son controlados por Bitel, quien no asume responsabilidad por los mismos. El contenido debe ser supervisado por un adulto responsable. Bitel no responde por el uso que realicen los usuarios.</p>
+      <h3>6. Consultas y reclamos</h3>
+      <p>Correo: servicioalcliente@bitel.com.pe · Línea Bitel: 123 (sin costo) · Provincias: 0800 79123 · WhatsApp: +51931123123</p>
+      <h3>7. Protección de datos</h3>
+      <p>Política disponible en: bitel.com.pe/cuadro-lista-proteccion-de-datos</p>
+      <h3>8. Jurisdicción</h3>
+      <p>Toda relación entre el cliente y Bitel se rige por las leyes peruanas y será resuelta por jueces peruanos.</p>
+      <h3>9. Condiciones adicionales</h3>
+      <p>El contenido puede cambiar en cualquier momento. La calidad de visualización depende del dispositivo y la conexión. Los cargos de internet son responsabilidad del cliente.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+function openTyC() { document.getElementById('tyc-modal').classList.add('open'); }
+function closeTyC() { document.getElementById('tyc-modal').classList.remove('open'); }
+</script>
+</body>
+</html>
