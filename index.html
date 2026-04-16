@@ -240,7 +240,7 @@ html.dark .rank-pos.bronze { background: #1e1500; }
     <div class="drawer-item" id="di-gracioso" onclick="selectCat('gracioso','memesespanol')">
       <span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg></span>Gracioso
     </div>
-    <div class="drawer-item" id="di-peru" onclick="selectCat('peru','PERU+Lima_Peru')">
+    <div class="drawer-item" id="di-peru" onclick="selectCat('peru','PERU')">
       <span class="ic"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg></span>Perú
     </div>
     <div class="drawer-item" id="di-deportes" onclick="selectCat('deportes','futbol+deportes')">
@@ -283,7 +283,7 @@ html.dark .rank-pos.bronze { background: #1e1500; }
   <div class="cat-tab" id="ct-popular" onclick="selectCat('popular','memesespanol+MemesEnEspanol+spain')">Popular</div>
   <div class="cat-tab" id="ct-tv" onclick="selectCat('tv','')">MemesTV</div>
   <div class="cat-tab" id="ct-gracioso" onclick="selectCat('gracioso','memesespanol')">Gracioso</div>
-  <div class="cat-tab" id="ct-peru" onclick="selectCat('peru','PERU+Lima_Peru')">Perú</div>
+  <div class="cat-tab" id="ct-peru" onclick="selectCat('peru','PERU')">Perú</div>
   <div class="cat-tab" id="ct-deportes" onclick="selectCat('deportes','futbol+deportes')">Deportes</div>
   <div class="cat-tab" id="ct-latinos" onclick="selectCat('latinos','dankgentina+MexicanMemes')">Memes latinos</div>
   <div class="cat-tab" id="ct-ranking" onclick="selectCat('ranking','')">Ranking</div>
@@ -330,6 +330,7 @@ html.dark .rank-pos.bronze { background: #1e1500; }
 let currentSub = 'memesespanol+PERU+MemesEnEspanol+BuenosMemesEsp';
 let votes = {};
 let isLoadingMore = false;
+let canLoadMore = true;
 let seenUrls = new Set();
 
 /* ── DARK MODE ── */
@@ -534,7 +535,7 @@ async function loadMemes() {
   lmw.style.display = 'none';
   label.textContent = '';
   seenUrls = new Set();
-  scrollObserver.observe(sentinel);
+  canLoadMore = true;
   try {
     const res = await fetch(`https://meme-api.com/gimme/${currentSub}/25`);
     if (!res.ok) throw new Error('HTTP ' + res.status);
@@ -554,7 +555,7 @@ async function loadMemes() {
 
 /* ── CARGAR MÁS ── */
 async function loadMore() {
-  if (isLoadingMore) return;
+  if (isLoadingMore || !canLoadMore) return;
   const lmw = document.getElementById('load-more-wrap');
   if (lmw.style.display === 'none') return;
   isLoadingMore = true;
@@ -569,8 +570,8 @@ async function loadMore() {
     const memes = (data.memes||[]).filter(m => m.url && isClean(m) && isCleanExtra(m) && !seenUrls.has(m.url));
     memes.forEach(m => seenUrls.add(m.url));
     if (!memes.length) {
+      canLoadMore = false;
       lmw.style.display = 'none';
-      scrollObserver.unobserve(sentinel);
       isLoadingMore = false;
       return;
     }
