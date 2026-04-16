@@ -328,6 +328,7 @@ html.dark .rank-pos.bronze { background: #1e1500; }
 
 <script>
 let currentSub = 'memesespanol+PERU+MemesEnEspanol+BuenosMemesEsp';
+let currentCat = 'tendencias';
 let votes = {};
 let isLoadingMore = false;
 let canLoadMore = true;
@@ -382,6 +383,7 @@ function selectCat(cat, sub) {
     if (feed)    feed.style.display    = '';
     if (toolbar) toolbar.style.display = '';
     if (ptr)     ptr.style.display     = '';
+    currentCat = cat;
     currentSub = sub;
     loadMemes();
   }
@@ -554,7 +556,7 @@ async function loadMemes() {
     feed.innerHTML = '';
     memes.forEach((m, i) => feed.appendChild(buildCard(m, i)));
     lmw.style.display = 'block';
-    await loadMemeDelDia();
+    if (currentCat === 'tendencias') await loadMemeDelDia();
   } catch(e) {
     feed.innerHTML = `<div class="error">No se pudo cargar.<br><small>${escHtml(e.message)}</small><br><button onclick="loadMemes()">↻ Reintentar</button></div>`;
   }
