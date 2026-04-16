@@ -131,9 +131,9 @@ html.dark .rank-title { color: var(--text); }
 .age-btn-exit { width: 100%; padding: 13px; border-radius: 12px; background: none; border: 1.5px solid var(--border); font-size: 14px; font-weight: 600; color: var(--muted); cursor: pointer; }
 
 /* HINT BANNER */
-.hint-banner { background: #fffbea; border-bottom: 1px solid #f0e68c; padding: 10px 16px; display: flex; align-items: center; gap: 10px; font-size: 13px; color: #7a6000; }
-.hint-banner svg { flex-shrink: 0; }
-.hint-close { margin-left: auto; background: none; border: none; cursor: pointer; font-size: 16px; color: #aaa; line-height: 1; padding: 2px 4px; }
+.hint-banner { background: #fffbea; border-bottom: 1px solid #f0e68c; padding: 10px 16px; display: flex; align-items: center; gap: 8px; font-size: 13px; color: #7a6000; }
+.hint-banner span { flex: 1; }
+.hint-close { flex-shrink: 0; background: none; border: none; cursor: pointer; font-size: 16px; color: #aaa; line-height: 1; padding: 2px 4px; }
 html.dark .hint-banner { background: #1a1500; border-color: #3a3000; color: #c8a800; }
 
 /* HIDE BUTTON EN CARDS */
@@ -292,8 +292,8 @@ html.dark .rank-pos.bronze { background: #1e1500; }
 </div>
 
 <div class="hint-banner" id="hint-banner">
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-  Si ves algo que no te late, toca la <strong style="margin:0 3px;">✕</strong> y desaparece. Tú mandas aquí. 👊
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+  <span>¿No te gusta algo? Toca <strong>✕</strong> y desaparece. 👊</span>
   <button class="hint-close" onclick="closeHint()">✕</button>
 </div>
   <button class="refresh-btn" onclick="loadMemes()">↻ Actualizar</button>
