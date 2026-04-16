@@ -330,6 +330,7 @@ html.dark .rank-pos.bronze { background: #1e1500; }
 let currentSub = 'memesespanol+PERU+MemesEnEspanol+BuenosMemesEsp';
 let votes = {};
 let isLoadingMore = false;
+let seenUrls = new Set();
 
 /* ── DARK MODE ── */
 function applyDark(on) {
@@ -532,11 +533,14 @@ async function loadMemes() {
   feed.innerHTML = '<div class="loading"><div class="spinner"></div>Cargando memes...</div>';
   lmw.style.display = 'none';
   label.textContent = '';
+  seenUrls = new Set();
+  scrollObserver.observe(sentinel);
   try {
     const res = await fetch(`https://meme-api.com/gimme/${currentSub}/25`);
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
-    const memes = (data.memes||[]).filter(m => m.url && isClean(m) && isCleanExtra(m));
+    const memes = (data.memes||[]).filter(m => m.url && isClean(m) && isCleanExtra(m) && !seenUrls.has(m.url));
+    memes.forEach(m => seenUrls.add(m.url));
     if (!memes.length) { feed.innerHTML = '<div class="error">Sin memes disponibles.<br><button onclick="loadMemes()">↻ Reintentar</button></div>'; return; }
     label.textContent = memes.length + ' memes';
     feed.innerHTML = '';
@@ -562,7 +566,14 @@ async function loadMore() {
     const res = await fetch(`https://meme-api.com/gimme/${currentSub}/25`);
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
-    const memes = (data.memes||[]).filter(m => m.url && isClean(m) && isCleanExtra(m));
+    const memes = (data.memes||[]).filter(m => m.url && isClean(m) && isCleanExtra(m) && !seenUrls.has(m.url));
+    memes.forEach(m => seenUrls.add(m.url));
+    if (!memes.length) {
+      lmw.style.display = 'none';
+      scrollObserver.unobserve(sentinel);
+      isLoadingMore = false;
+      return;
+    }
     const offset = feed.querySelectorAll('.meme-card').length;
     memes.forEach((m, i) => feed.appendChild(buildCard(m, offset + i)));
   } catch(e) {}
