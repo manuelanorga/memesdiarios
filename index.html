@@ -361,22 +361,29 @@ function selectCat(cat, sub) {
   const di = document.getElementById('di-' + cat);
   if (ct) { ct.classList.add('active'); ct.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' }); }
   if (di) di.classList.add('active');
-  const feed = document.getElementById('feed');
+  const feed    = document.getElementById('feed');
   const toolbar = document.getElementById('toolbar');
-  const tv = document.getElementById('tv-section');
-  const lmw = document.getElementById('load-more-wrap');
+  const tv      = document.getElementById('tv-section');
+  const lmw     = document.getElementById('load-more-wrap');
   const ranking = document.getElementById('ranking-section');
-  feed.style.display = 'none'; toolbar.style.display = 'none';
-  tv.classList.remove('active'); ranking.classList.remove('active');
-  lmw.style.display = 'none';
+  const ptr     = document.getElementById('ptr');
+  if (feed)    feed.style.display    = 'none';
+  if (toolbar) toolbar.style.display = 'none';
+  if (lmw)     lmw.style.display     = 'none';
+  if (ptr)     ptr.style.display     = 'none';
+  if (tv)      tv.classList.remove('active');
+  if (ranking) ranking.classList.remove('active');
   if (cat === 'tv') {
-    tv.classList.add('active');
+    if (tv) tv.classList.add('active');
   } else if (cat === 'ranking') {
-    ranking.classList.add('active');
+    if (ranking) ranking.classList.add('active');
     loadRanking();
   } else {
-    feed.style.display = ''; toolbar.style.display = '';
-    currentSub = sub; loadMemes();
+    if (feed)    feed.style.display    = '';
+    if (toolbar) toolbar.style.display = '';
+    if (ptr)     ptr.style.display     = '';
+    currentSub = sub;
+    loadMemes();
   }
 }
 
