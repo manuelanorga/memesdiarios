@@ -120,6 +120,32 @@ html.dark .rank-title { color: var(--text); }
 .dark-toggle .toggle-thumb { position: absolute; width: 24px; height: 24px; border-radius: 50%; background: #fff; top: 3px; left: 3px; transition: left 0.25s ease; box-shadow: 0 2px 4px rgba(0,0,0,0.25); }
 .dark-toggle.on .toggle-thumb { left: 25px; }
 
+/* POPUP EDAD */
+.age-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 999; display: flex; align-items: center; justify-content: center; padding: 20px; }
+.age-box { background: var(--card-bg); border-radius: 20px; padding: 28px 24px; max-width: 360px; width: 100%; text-align: center; }
+.age-icon { font-size: 42px; margin-bottom: 12px; }
+.age-title { font-size: 18px; font-weight: 800; color: var(--text); margin-bottom: 8px; }
+.age-text { font-size: 14px; color: var(--muted); line-height: 1.6; margin-bottom: 24px; }
+.age-btn-enter { width: 100%; padding: 13px; border-radius: 12px; background: var(--yellow); border: none; font-size: 15px; font-weight: 700; color: #111; cursor: pointer; margin-bottom: 10px; transition: opacity 0.15s; }
+.age-btn-enter:hover { opacity: 0.85; }
+.age-btn-exit { width: 100%; padding: 13px; border-radius: 12px; background: none; border: 1.5px solid var(--border); font-size: 14px; font-weight: 600; color: var(--muted); cursor: pointer; }
+
+/* HINT BANNER */
+.hint-banner { background: #fffbea; border-bottom: 1px solid #f0e68c; padding: 10px 16px; display: flex; align-items: center; gap: 10px; font-size: 13px; color: #7a6000; }
+.hint-banner svg { flex-shrink: 0; }
+.hint-close { margin-left: auto; background: none; border: none; cursor: pointer; font-size: 16px; color: #aaa; line-height: 1; padding: 2px 4px; }
+html.dark .hint-banner { background: #1a1500; border-color: #3a3000; color: #c8a800; }
+
+/* HIDE BUTTON EN CARDS */
+.meme-card { position: relative; }
+.hide-btn { position: absolute; top: 10px; right: 10px; width: 26px; height: 26px; border-radius: 50%; background: rgba(0,0,0,0.12); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.15s; z-index: 2; }
+.hide-btn:hover { background: rgba(0,0,0,0.25); }
+.hide-btn svg { width: 12px; height: 12px; stroke: #555; stroke-width: 2.5; }
+html.dark .hide-btn { background: rgba(255,255,255,0.1); }
+html.dark .hide-btn svg { stroke: #aaa; }
+.meme-card.hiding { animation: fadeOut 0.3s ease forwards; }
+@keyframes fadeOut { to { opacity: 0; transform: scale(0.95); height: 0; margin: 0; padding: 0; overflow: hidden; } }
+
 /* RANKING */
 .ranking-section { display: none; max-width: 680px; margin: 0 auto; padding: 12px; }
 .ranking-section.active { display: block; }
@@ -174,6 +200,17 @@ html.dark .rank-pos.bronze { background: #1e1500; }
 </style>
 </head>
 <body>
+
+<!-- POPUP EDAD -->
+<div class="age-overlay" id="age-overlay">
+  <div class="age-box">
+    <div class="age-icon">😎</div>
+    <div class="age-title">No todo te va a gustar…<br>y está bien.</div>
+    <div class="age-text">Si aguantas, entra.</div>
+    <button class="age-btn-enter" onclick="enterSite()">18+ y listo pa' reír 😂</button>
+    <button class="age-btn-exit" onclick="window.location.href='https://www.google.com'">Me voy 🚪</button>
+  </div>
+</div>
 
 <div class="overlay" id="overlay" onclick="closeDrawer()"></div>
 
@@ -253,7 +290,11 @@ html.dark .rank-pos.bronze { background: #1e1500; }
 </div>
 </div>
 
-<div class="toolbar" id="toolbar">
+<div class="hint-banner" id="hint-banner">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+  Si ves algo que no te late, toca la <strong style="margin:0 3px;">✕</strong> y desaparece. Tú mandas aquí. 👊
+  <button class="hint-close" onclick="closeHint()">✕</button>
+</div>
   <button class="refresh-btn" onclick="loadMemes()">↻ Actualizar</button>
   <span class="count-label" id="count-label"></span>
 </div>
@@ -355,6 +396,9 @@ function buildCard(m, i) {
   const card = document.createElement('div');
   card.className = 'meme-card';
   card.innerHTML = `
+    <button class="hide-btn" onclick="hideCard(this, '${escHtml(m.title)}')" title="Ocultar este meme">
+      <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
     <div class="meme-body"><div class="meme-title">${escHtml(m.title)}</div></div>
     <div class="meme-img-wrap"><img class="meme-img" src="${escHtml(m.url)}" loading="lazy" onerror="this.parentElement.style.display='none'"></div>
     <div class="meme-footer">
@@ -367,6 +411,41 @@ function buildCard(m, i) {
   return card;
 }
 
+/* ── POPUP EDAD ── */
+function enterSite() {
+  localStorage.setItem('ageOk', '1');
+  document.getElementById('age-overlay').style.display = 'none';
+}
+(function checkAge() {
+  if (localStorage.getItem('ageOk') === '1') {
+    document.getElementById('age-overlay').style.display = 'none';
+  }
+})();
+
+/* ── HINT BANNER ── */
+function closeHint() {
+  localStorage.setItem('hintClosed', '1');
+  document.getElementById('hint-banner').style.display = 'none';
+}
+if (localStorage.getItem('hintClosed') === '1') {
+  document.getElementById('hint-banner').style.display = 'none';
+}
+
+/* ── OCULTAR MEME ── */
+let hiddenKeywords = JSON.parse(localStorage.getItem('hiddenKw') || '[]');
+function hideCard(btn, title) {
+  const card = btn.closest('.meme-card');
+  card.classList.add('hiding');
+  const words = title.toLowerCase().split(/\s+/).filter(w => w.length > 4);
+  hiddenKeywords = [...new Set([...hiddenKeywords, ...words])].slice(-50);
+  localStorage.setItem('hiddenKw', JSON.stringify(hiddenKeywords));
+  setTimeout(() => card.remove(), 300);
+}
+const isCleanExtra = m => {
+  const t = (m.title || '').toLowerCase();
+  return !hiddenKeywords.some(w => t.includes(w));
+};
+
 /* ── MEME DEL DÍA ── */
 async function loadMemeDelDia() {
   const today = new Date().toISOString().slice(0, 10);
@@ -377,7 +456,7 @@ async function loadMemeDelDia() {
       const res = await fetch('https://meme-api.com/gimme/memesespanol+PERU+MemesEnEspanol/5');
       if (res.ok) {
         const data = await res.json();
-        const clean = (data.memes||[]).filter(m => m.url && isClean(m));
+        const clean = (data.memes||[]).filter(m => m.url && isClean(m) && isCleanExtra(m));
         if (clean.length) {
           meme = clean[0];
           localStorage.setItem('mdd_date', today);
@@ -418,7 +497,7 @@ async function loadRanking() {
     const res = await fetch('https://meme-api.com/gimme/memesespanol+PERU+MemesEnEspanol+mexico+argentina+chile/50');
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
-    const memes = (data.memes||[]).filter(m => m.url && isClean(m))
+    const memes = (data.memes||[]).filter(m => m.url && isClean(m) && isCleanExtra(m))
       .sort((a,b) => b.ups - a.ups).slice(0, 10);
     if (!memes.length) { rfeed.innerHTML = '<div class="error">Sin datos disponibles.</div>'; return; }
     const medals = ['🥇','🥈','🥉'];
@@ -456,7 +535,7 @@ async function loadMemes() {
     const res = await fetch(`https://meme-api.com/gimme/${currentSub}/25`);
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
-    const memes = (data.memes||[]).filter(m => m.url && isClean(m));
+    const memes = (data.memes||[]).filter(m => m.url && isClean(m) && isCleanExtra(m));
     if (!memes.length) { feed.innerHTML = '<div class="error">Sin memes disponibles.<br><button onclick="loadMemes()">↻ Reintentar</button></div>'; return; }
     label.textContent = memes.length + ' memes';
     feed.innerHTML = '';
@@ -482,7 +561,7 @@ async function loadMore() {
     const res = await fetch(`https://meme-api.com/gimme/${currentSub}/25`);
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
-    const memes = (data.memes||[]).filter(m => m.url && isClean(m));
+    const memes = (data.memes||[]).filter(m => m.url && isClean(m) && isCleanExtra(m));
     const offset = feed.querySelectorAll('.meme-card').length;
     memes.forEach((m, i) => feed.appendChild(buildCard(m, offset + i)));
   } catch(e) {}
